@@ -1,0 +1,182 @@
+需求：
+在vue中等于注册之后，进入到主页面。菜单栏有把页，分别是introduction,aichat,prompts,aipatentdratfing,aipatentevaluation,aiapplication,history,problems.
+
+1.在introduction页面中添加背景图片，正中间显示文字,h1标签Introducing the Copattern for all of you,p标签Integrated chatGPT, chatGLM and other AI models are applied to AI chat, 
+        document translation, patent drafting, patent evaluation application, etc，button Learn more about Copattern.如图introduction.png.learn more about 按钮连接到外部url,暂定https://www.baidu.com/
+
+2.在aichat页面显示，跟chatgpt页面相似，上面显示与ai对话的内容，下方是输入框。前端请求openai接口或者请求后端都可以。如图aichat.png
+3.在prompt页面显示提示信息。两级选择器分别是领域和行业。请求后端/prompts/，发送get请求获取json字符串，category为领域，prompt为行业。
+在下面有个输入框，用户可以自己输入，也可以在选择器中选择，可以选择多次。输入框显示用户的输入和选择。
+
+4.在aitranslation页面，下拉框选择的模型例如chatgpt3.5,chatgpt4。下拉框选择语言，例如Chinese,English,Japanese等。上传文件按钮，文件可以上传多个
+。翻译和下载按钮。这个要请求后端接口详见后端api文档中translation post接口，还需后端发送browse_histories post请求，记录用户的行为。详见api文档
+5.在history页面就是get请求browse_histories，表中显示字段 （索引，模型，创建时间，源文件，翻译文件，提示）。有分页，每页20条
+6.在problem页面显示用户提出的问题字段（索引，用户名，创建时间，问题描述，进展）。添加新增按钮，出现文本框，输入问题描述，下方是提交按钮。详见api文档get post请求
+
+
+后端api:
+--------------------------------------------------------------------------------------------
+prompts页面：
+get请求：
+http://127.0.0.1:8000/prompts/
+返回json
+{
+    "code": 0,
+    "errmsg": "ok",
+    "data": [
+        {
+            "id": 1,
+            "prompt": "How are you feeling today?",
+            "category": "Psychology"
+        },
+        {
+            "id": 2,
+            "prompt": "What is your current medication?",
+            "category": "Medical"
+        },
+        {
+            "id": 3,
+            "prompt": "What is your risk tolerance?",
+            "category": "Finance"
+        },
+        {
+            "id": 4,
+            "prompt": "万物互联",
+            "category": "5G"
+        }
+    ]
+}
+
+post请求：目前用不到
+http://127.0.0.1:8000/prompts/
+body:{
+"create_time": "2022-01-01 12:00:00",
+"update_time":"2022-01-01 12:00:00",
+"prompt":"你好",
+"category":"问答"
+}
+
+---------------------------------------------------------------------------
+翻译页面：http://127.0.0.1:8000/translation/
+post请求：
+body:{
+"username":"hh",
+"files[]":  "- file://C:\Users\Administrator\Desktop\test.pdf
+  	- file://C:\Users\Administrator\Desktop\test2.pdf"
+}
+返回json
+{ "code": 0,
+    "errmsg": "ok",
+    "data": "C:\\Users\\ex_hao.huang\\Desktop\\tcl-projects\\llm\\files/huanghao/download/test_translated .txt\n\nC:\\Users\\ex_hao.huang\\Desktop\\tcl-projects\\llm\\files/huanghao/download/test1_translated .txt"
+    }
+data里面是目标文件的url，以\n\n分割的字符串。
+--------------------------------------------------------------------------
+问题页面：
+get 请求 http://127.0.0.1:8000/problems/
+参数：
+"username": "huanghao"
+
+返回json
+{
+    "code": 0,
+    "errmsg": "ok",
+    "data": [
+        {
+            "id": 5,
+            "username": "huanghao",
+            "create_time": "2021-07-01T10:00:00Z",
+            "description": "This is problem 5",
+            "status": "going on"
+        },
+        {
+            "id": 9,
+            "username": "huanghao",
+            "create_time": "2023-06-21T10:00:00Z",
+            "description": "我有一个问题",
+            "status": "going on"
+        }
+    ]
+}
+
+post请求：http://127.0.0.1:8000/problems/
+body:{
+"username":"hh",
+"create_time":"2022-01-01 12:00:00",
+"description":"我有一个问题",
+"status":"going on"
+}
+
+---------------------------------------------------------
+模型：http://127.0.0.1:8000/models/  请求后端在下拉框显示模型
+get请求：无参数
+
+返回json
+{
+    "code": 0,
+    "errmsg": "ok",
+    "data": [
+        {
+            "id": 1,
+            "model": "GPT-3.5",
+            "language": "English"
+        },
+        {
+            "id": 2,
+            "model": "GPT-4",
+            "language": "English"
+        }]}
+
+post请求：http://127.0.0.1:8000/models/
+body:{
+"create_time":"2022-01-01 12:00:00",
+"update_time":"2022-01-01 12:00:00",
+"model":"chatgpt3.5",
+"language":"english"
+}
+
+返回json
+{
+    "code": 0,
+    "errmsg": "ok"
+}
+
+---------------------------------------------------
+历史记录：http://127.0.0.1:8000/browse_histories/
+post请求:
+body:{
+"username":"hh",
+"history_record":"{"model":"chatgpt3.5",
+		"create_time":"2022-01-10 09:00:00",
+		"sourcefile":"test.pdf",
+		"translatedfile":"translated_test.pdf",
+		"prompt":"你好",
+		}"
+}
+
+返回json
+{
+    "code": 0,
+    "errmsg": "ok"
+}
+
+get请求：http://127.0.0.1:8000/browse_histories/
+参数:
+"username":"hh"
+
+返回json:
+{
+    "code": 0,
+    "errmsg": "ok",
+    "data": {
+        "1687343813.6998327": "{\"time\":2023-06-21 11:45:18, \n\"sourcefile\":\"test.pdf\",\n\"translatedfile\":	\"translated_test.pdf\",\n\"model\":\"ChatGTP3.5\",\n\"prompt\":\"这是一个测试\"\n}"
+    }
+}
+
+
+
+
+
+
+
+
+
